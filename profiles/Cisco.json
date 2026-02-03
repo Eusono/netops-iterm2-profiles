@@ -111,7 +111,7 @@
       "action" : "HighlightTrigger",
       "matchType" : 0,
       "parameter" : "{p3#ffff00000000,}",
-      "regex" : "(?i).*_ERR:|.*fail.*|invalid|\\breload\\b|err-disabled",
+      "regex" : "(?i).*_ERR:|\bfail\b|\binvalid\b|\breload\b|\berr-disabled\b",
       "partial" : false,
       "contentregex" : "",
       "disabled" : 0,
