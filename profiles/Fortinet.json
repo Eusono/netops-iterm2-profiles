@@ -171,7 +171,7 @@
       "action" : "HighlightTrigger",
       "matchType" : 0,
       "parameter" : "{p3#d7d732323232,}",
-      "regex" : "(?i)\\b(delete|purge|erase|format|confirm)\\b",
+      "regex" : "(?i)\\b(delete|purge|erase|format|reboot|shutdown)\\b",
       "partial" : true,
       "contentregex" : "",
       "disabled" : 0,

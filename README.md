@@ -1,3 +1,18 @@
+# netops-iterm2-profiles
+
+**iTerm2 is not a session manager; it’s a logic engine.**
+
+This repository contains a collection of iTerm2 profiles and triggers designed for Network Operations. Instead of maintaining hundreds of static session files, this framework uses **Automatic Profile Switching (APS)** to detect your environment and apply optimized, non-greedy regex highlighting on the fly.
+
+---
+
+## 🚀 How it Works
+
+1.  **Detection**: Your `Default` profile monitors terminal output for specific patterns (like an `ssh` command).
+2.  **Tagging**: Once a pattern is matched, a trigger "reports" a generic session tag (e.g., `net-ios`).
+3.  **Switching**: iTerm2 sees the tag and automatically swaps the active tab to the corresponding Master Profile.
+4.  **Revert**: When the `ssh` session ends, iTerm2 automatically returns the tab to your `Default` profile.
+
 ---
 
 ## 🛠 Setup Instructions
@@ -13,20 +28,7 @@ For iTerm2 to track your location and handle profile switching, you **must** ins
 ### 2. Import Master Profiles
 The `.json` files in the `/Profiles` folder contain all the highlighting triggers, colors, and word-boundary protections.
 
-* Download the desired `.json` files from the `/Profiles` folder in this reposit# netops-iterm2-profiles
-
-**iTerm2 is not a session manager; it’s a logic engine.**
-
-This repository contains a collection of iTerm2 profiles and triggers designed for Network Operations. Instead of maintaining hundreds of static session files, this framework uses **Automatic Profile Switching (APS)** to detect your environment and apply optimized, non-greedy regex highlighting on the fly.
-
----
-
-## 🚀 How it Works
-
-1.  **Detection**: Your `Default` profile monitors terminal output for specific patterns (like an `ssh` command).
-2.  **Tagging**: Once a pattern is matched, a trigger "reports" a generic session tag (e.g., `net-ios`).
-3.  **Switching**: iTerm2 sees the tag and automatically swaps the active tab to the corresponding Master Profile.
-4.  **Revory.
+* Download the desired `.json` files from the `/Profiles` folder in this repository.
 * In iTerm2, open **Settings > Profiles**.
 * Click the **Other Actions** (cog icon) at the bottom of the profile list.
 * Select **Import JSON Profiles...** and choose the downloaded files.
