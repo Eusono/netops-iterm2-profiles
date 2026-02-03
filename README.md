@@ -1,5 +1,3 @@
-ersion**: When you `exit` the device, iTerm2 detects the loss of the session tag and snaps back to your `Default` profile.
-
 ---
 
 ## 🛠 Setup Instructions
