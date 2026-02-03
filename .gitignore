@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+
+# Swap files
+*.swp
+*~
+
+# Python
+*.pyc
+__pycache__/
