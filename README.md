@@ -1,58 +1,71 @@
-# netops-iterm2-profiles
+# iTerm2 NetOps Logic Engine
 
-**iTerm2 is not a session manager; it’s a logic engine.**
+This project automates iTerm2 profile switching for Network Engineers. It uses a ZSH wrapper to detect device types (Cisco, Fortinet, etc.) during an SSH command and updates the terminal theme accordingly.
 
-This repository contains a collection of iTerm2 profiles and triggers designed for Network Operations. Instead of maintaining hundreds of static session files, this framework uses **Automatic Profile Switching (APS)** to detect your environment and apply optimized, non-greedy regex highlighting on the fly.
+## ✨ Key Features
+* **Zero Latency**: Switches profiles only when you hit `Enter` on an SSH command.
+* **No Key Conflicts**: Prevents accidental switches when typing common commands like `show` or `status`.
+* **Auto-Revert**: Automatically snaps back to your `Default` profile the moment you `exit` a session.
+* **Vendor Intelligence**: Built-in logic to distinguish between Cisco gear and Fortinet/FortiNAC devices.
 
----
+## 🛠️ iTerm2 Setup (Required)
 
-## 🚀 How it Works
+To allow the script to change your profile, you must enable "Proprietary Escape Sequences" and clear existing automatic rules:
 
-1.  **Detection**: Your `Default` profile monitors terminal output for specific patterns (like an `ssh` command).
-2.  **Tagging**: Once a pattern is matched, a trigger "reports" a generic session tag (e.g., `net-ios`).
-3.  **Switching**: iTerm2 sees the tag and automatically swaps the active tab to the corresponding Master Profile.
-4.  **Revert**: When the `ssh` session ends, iTerm2 automatically returns the tab to your `Default` profile.
+1. **Enable Escape Sequences**:
+    * Open **iTerm2 Settings** ($\text{\⌘}$ + **,**).
+    * Go to the **Advanced** tab and search for "escape".
+    * Set **"Prevent control sequences from changing the current profile?"** to **No**.
 
----
+2. **Clear APS Rules**:
+    * Go to **Profiles > [Your Profile] > Advanced**.
+    * Ensure the **Automatic Profile Switching** box at the bottom is **completely empty** (remove any `*` rules).
 
-## 🛠 Setup Instructions
+3. **Cleanup Triggers**:
+    * In **Profiles > Default > Advanced > Triggers**, ensure any old regex triggers for profile switching are removed to prevent conflicts.
 
-### 1. Install Shell Integration
-For iTerm2 to track your location and handle profile switching, you **must** install Shell Integration on your local machine.
+## 📝 Installation
 
-* Open iTerm2.
-* Go to the top menu bar and select **iTerm2 > Install Shell Integration**.
-* Follow the prompts to update your shell profile (e.g., `.zshrc` or `.bash_profile`).
-* **Restart iTerm2** after installation.
+Add the following function to your `~/.zshrc` file:
 
-### 2. Import Master Profiles
-The `.json` files in the `/Profiles` folder contain all the highlighting triggers, colors, and word-boundary protections.
+```bash
+# iTerm2 NetOps Profile Logic Engine
+ssh() {
+    local dest="${@: -1}"
+    local ldest="${dest:l}" # Lowercase for reliable matching
 
-* Download the desired `.json` files from the `/Profiles` folder in this repository.
-* In iTerm2, open **Settings > Profiles**.
-* Click the **Other Actions** (cog icon) at the bottom of the profile list.
-* Select **Import JSON Profiles...** and choose the downloaded files.
+    # 1. Cisco Logic (Matches sw, rt, n5k, n7k, n9k, nbk-wan)
+    if [[ "$ldest" =~ "sw" || "$ldest" =~ "rt" || "$ldest" =~ "n5k" || "$ldest" =~ "n7k" || "$ldest" =~ "n9k" || "$ldest" =~ "nbk-wan" ]]; then
+        if [[ "$ldest" =~ "nac" ]]; then
+            command ssh "$@" # Stay in Default for NAC devices
+        else
+            # Switches to the "Cisco" profile
+            echo -e "\033]50;SetProfile=Cisco\a"
+            command ssh "$@"
+            # Reverts to "Default" after exit
+            echo -e "\033]50;SetProfile=Default\a"
+        fi
 
-### 3. Configure the Detection Trigger
-You must tell your `Default` profile when to trigger a switch.
+    # 2. Fortinet Logic (Matches fw, fgt)
+    elif [[ "$ldest" =~ "fw" || "$ldest" =~ "fgt" ]]; then
+        # Switches to the "Fortinet" profile
+        echo -e "\033]50;SetProfile=Fortinet\a"
+        command ssh "$@"
+        # Reverts to "Default" after exit
+        echo -e "\033]50;SetProfile=Default\a"
 
-* Go to **Settings > Profiles > Default > Advanced > Triggers**.
-* Click **Edit** and add a new trigger:
-    * **Regular Expression**: `(?i)ssh\s+.*(?:sw|rt|n[579]k)[a-zA-Z0-9.-]*` (Adjust these keywords to match your device naming convention).
-    * **Action**: Select `Report User and Host` from the dropdown.
-    * **Parameter**: In the empty text box that appears below the Action dropdown, type `cisco-session` (Match this to the tag used in your imported profile).
-* Go to **Settings > Profiles > Default > Advanced**.
-* In the **Automatic Profile Switching** section, add a single asterisk `*` to the list. This acts as the "fallback" to return you to the Default profile upon exiting a session.
+    # 3. Standard SSH (Fallback)
+    else
+        command ssh "$@"
+    fi
+}
+\```
 
----
+## 🚀 Usage
 
-## 🔍 Features
+Simply use SSH as normal. The Logic Engine handles the rest:
 
-* **Non-Greedy Highlighting**: Regex patterns are optimized to highlight specific keywords without "bleeding" into usernames or hashes.
-* **Whole-Word Protection**: Uses `\b` boundaries so that short status words like `on` or `up` don't trigger inside words like "authentication".
-* **Instant Prompts**: Prompt triggers are set to "Instant" (check the **Instant** box in Triggers) to ensure your hostname is highlighted on the current line as you work.
-
----
-
-## ⚖️ License
-This project is licensed under the **MIT License**. You are free to fork, modify, and share these configurations, provided you include the original non-warranty clause.
+* `ssh admin@nbk-n7k-c1` → Switches to **Cisco** profile.
+* `ssh admin@nbk-fw-01` → Switches to **Fortinet** profile.
+* `ssh admin@fortinac` → Stays in **Default**.
+* `exit` → Automatically returns to **Default**.
