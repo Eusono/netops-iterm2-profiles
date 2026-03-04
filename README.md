@@ -28,6 +28,8 @@ To allow the script to change your profile, you must enable "Proprietary Escape 
 
 Add the following function to your `~/.zshrc` file:
 
+> **Note**: Yopu should customize the keywords in the 'if' statements below to match your specific network naming standards (e.g., replace `n7k` or `sw` with your own codes).
+
 ```bash
 # iTerm2 NetOps Profile Logic Engine
 ssh() {
