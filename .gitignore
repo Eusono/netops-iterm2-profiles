@@ -11,3 +11,8 @@
 # Python
 *.pyc
 __pycache__/
+
+# Local / Team overlay scripts & env files
+team-setup.sh
+*.local.sh
+.netops.env

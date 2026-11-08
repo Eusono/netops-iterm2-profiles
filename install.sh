@@ -15,8 +15,9 @@ PLIST_PATH="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
 BLOCK_START="# >>> netops-iterm2-profiles >>>"
 BLOCK_END="# <<< netops-iterm2-profiles <<<"
 
-DEFAULT_FORTINET_REGEX="(fw|fgt|fmg|faz|fac|forti)"
-DEFAULT_CISCO_REGEX="(sw|rt|rtr|core|dist|agg|wan|isr|asr|c9[0-9]{3}|n[3579]k)"
+[[ -f "$REPO_DIR/.netops.env" ]] && source "$REPO_DIR/.netops.env"
+DEFAULT_FORTINET_REGEX="${NETOPS_FORTINET_REGEX:-"(fw|fgt|fmg|faz|fac|forti)"}"
+DEFAULT_CISCO_REGEX="${NETOPS_CISCO_REGEX:-"(sw|rt|rtr|core|dist|agg|wan|isr|asr|c9[0-9]{3}|n[3579]k)"}"
 
 MODE="interactive"
 
