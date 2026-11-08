@@ -90,6 +90,40 @@ echo "============================================================"
 echo "  iTerm2 NetOps Logic Engine - Setup"
 echo "============================================================"
 
+# ------------------------------------------------------------------------------
+# Preflight Check: Homebrew & fzf (Required for Fuzzy SSH Device Picker)
+# ------------------------------------------------------------------------------
+BREW_BIN=""
+if command -v brew >/dev/null 2>&1; then
+    BREW_BIN="$(command -v brew)"
+elif [[ -x "/opt/homebrew/bin/brew" ]]; then
+    BREW_BIN="/opt/homebrew/bin/brew"
+elif [[ -x "/usr/local/bin/brew" ]]; then
+    BREW_BIN="/usr/local/bin/brew"
+fi
+
+if [[ -z "$BREW_BIN" ]]; then
+    echo ""
+    echo "  [!] Stopping Setup: Homebrew is not installed on this system."
+    echo "      macOS does not include Homebrew by default, and it is required"
+    echo "      to install 'fzf' for the interactive NetOps Device Picker (s)."
+    echo ""
+    echo "  To install Homebrew, run:"
+    echo "    /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+    echo ""
+    echo "  Once Homebrew is installed, re-run ./install.sh to complete setup."
+    exit 0
+fi
+
+if ! command -v fzf >/dev/null 2>&1 && [[ ! -x "/opt/homebrew/bin/fzf" ]] && [[ ! -x "/usr/local/bin/fzf" ]]; then
+    echo ""
+    echo "==> Preflight: 'fzf' not found. Installing via Homebrew..."
+    "$BREW_BIN" install fzf
+    echo "  [OK] Installed fzf"
+else
+    echo "==> Preflight: Homebrew and fzf detected."
+fi
+
 FORTINET_REGEX="$DEFAULT_FORTINET_REGEX"
 CISCO_REGEX="$DEFAULT_CISCO_REGEX"
 ENABLE_LOGGING="y"
@@ -184,7 +218,7 @@ if [[ "$ENABLE_LOGGING" == "y" ]]; then
     cat >> "$ZSHRC_PATH" << EOF
 
 $BLOCK_START
-# iTerm2 NetOps Profile & Session Logging Engine
+# iTerm2 NetOps Profile, Logging & Fuzzy Selector Engine
 export NETOPS_FORTINET_REGEX='${FORTINET_REGEX}'
 export NETOPS_CISCO_REGEX='${CISCO_REGEX}'
 
@@ -225,13 +259,48 @@ function ssh() {
     echo -ne "\033]50;SetProfile=Default\a"
     printf "\e]0;Terminal\a"
 }
+
+# Fuzzy SSH Device Picker (Requires fzf)
+ssh_selector() {
+    local -a ssh_files
+    [[ -f "\$HOME/.ssh/config" ]] && ssh_files+=("\$HOME/.ssh/config")
+    [[ -f "\$HOME/.ssh/session-manager" ]] && ssh_files+=("\$HOME/.ssh/session-manager")
+    for f in "\$HOME/.ssh/config.d/"*(#qN); do
+        [[ -f "\$f" ]] && ssh_files+=("\$f")
+    done
+
+    if (( \${#ssh_files[@]} == 0 )); then
+        echo "No SSH config files found in ~/.ssh/config or ~/.ssh/session-manager" >&2
+        return 1
+    fi
+
+    local target=\$(awk '
+      tolower(\$1) == "host" {
+        for (i = 2; i <= NF; i++) {
+          if (\$i ~ /^#/) break
+          if (\$i !~ /[*?!\[]/) print \$i
+        }
+      }
+    ' "\${ssh_files[@]}" | sort -u | fzf \\
+      --height 40% \\
+      --reverse \\
+      --border \\
+      --header="NetOps Device Picker" \\
+      --prompt=" " \\
+      --color="header:italic:cyan")
+
+    if [[ -n "\$target" ]]; then
+        ssh "\$target"
+    fi
+}
+alias s='ssh_selector'
 $BLOCK_END
 EOF
 else
     cat >> "$ZSHRC_PATH" << EOF
 
 $BLOCK_START
-# iTerm2 NetOps Profile Engine
+# iTerm2 NetOps Profile & Fuzzy Selector Engine
 export NETOPS_FORTINET_REGEX='${FORTINET_REGEX}'
 export NETOPS_CISCO_REGEX='${CISCO_REGEX}'
 
@@ -253,13 +322,49 @@ function ssh() {
     echo -ne "\033]50;SetProfile=Default\a"
     printf "\e]0;Terminal\a"
 }
+
+# Fuzzy SSH Device Picker (Requires fzf)
+ssh_selector() {
+    local -a ssh_files
+    [[ -f "\$HOME/.ssh/config" ]] && ssh_files+=("\$HOME/.ssh/config")
+    [[ -f "\$HOME/.ssh/session-manager" ]] && ssh_files+=("\$HOME/.ssh/session-manager")
+    for f in "\$HOME/.ssh/config.d/"*(#qN); do
+        [[ -f "\$f" ]] && ssh_files+=("\$f")
+    done
+
+    if (( \${#ssh_files[@]} == 0 )); then
+        echo "No SSH config files found in ~/.ssh/config or ~/.ssh/session-manager" >&2
+        return 1
+    fi
+
+    local target=\$(awk '
+      tolower(\$1) == "host" {
+        for (i = 2; i <= NF; i++) {
+          if (\$i ~ /^#/) break
+          if (\$i !~ /[*?!\[]/) print \$i
+        }
+      }
+    ' "\${ssh_files[@]}" | sort -u | fzf \\
+      --height 40% \\
+      --reverse \\
+      --border \\
+      --header="NetOps Device Picker" \\
+      --prompt=" " \\
+      --color="header:italic:cyan")
+
+    if [[ -n "\$target" ]]; then
+        ssh "\$target"
+    fi
+}
+alias s='ssh_selector'
 $BLOCK_END
 EOF
 fi
 
-echo "  [OK] Installed NetOps ssh() wrapper into $ZSHRC_PATH"
+echo "  [OK] Installed NetOps ssh() wrapper & fuzzy picker ('s') into $ZSHRC_PATH"
 echo ""
 echo "============================================================"
 echo "  Setup Complete! Run the following command to activate:"
 echo "    source $ZSHRC_PATH"
+echo "  Then type 's' to launch the interactive NetOps Device Picker!"
 echo "============================================================"
