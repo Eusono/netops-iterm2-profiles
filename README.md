@@ -119,7 +119,7 @@ ssh_selector() {
     local -a ssh_files
     [[ -f "$HOME/.ssh/config" ]] && ssh_files+=("$HOME/.ssh/config")
     [[ -f "$HOME/.ssh/session-manager" ]] && ssh_files+=("$HOME/.ssh/session-manager")
-    for f in "$HOME/.ssh/config.d/"*(#qN); do
+    for f in "$HOME/.ssh/config.d/"*(N); do
         [[ -f "$f" ]] && ssh_files+=("$f")
     done
 
